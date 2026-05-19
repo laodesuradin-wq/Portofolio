@@ -1,0 +1,6 @@
+{
+  "name": "Portofolio Saya",
+  "description": "Portofolio modern dengan Tailwind CSS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
