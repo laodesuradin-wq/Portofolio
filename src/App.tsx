@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Mail, Linkedin, Github, ExternalLink, Award, Edit3, Save, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import localforage from 'localforage';
 
 // Default data
 const DEFAULT_PORTFOLIO_DATA = {
@@ -70,23 +71,39 @@ const DEFAULT_PORTFOLIO_DATA = {
 export default function App() {
   const [data, setData] = useState(DEFAULT_PORTFOLIO_DATA);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Muat data dari localStorage saat komponen dipasang
+  // Muat data dari localforage saat komponen dipasang
   useEffect(() => {
-    const savedData = localStorage.getItem('portfolioData');
-    if (savedData) {
+    async function loadData() {
       try {
-        setData(JSON.parse(savedData));
+        const localForageData = await localforage.getItem('portfolioData');
+        const localStorageData = localStorage.getItem('portfolioData');
+        
+        if (localForageData) {
+          setData(JSON.parse(localForageData as string));
+        } else if (localStorageData) {
+          setData(JSON.parse(localStorageData));
+          // Migrate to localforage
+          localforage.setItem('portfolioData', localStorageData).catch(e => console.error(e));
+        }
       } catch (e) {
-        console.error("Gagal memuat data dari localStorage", e);
+        console.error("Gagal memuat data", e);
+      } finally {
+        setIsLoaded(true);
       }
     }
+    loadData();
   }, []);
 
-  // Simpan data ke localStorage setiap kali ada perubahan, untuk persistensi
+  // Simpan data ke localforage setiap kali ada perubahan, untuk persistensi
   useEffect(() => {
-    localStorage.setItem('portfolioData', JSON.stringify(data));
-  }, [data]);
+    if (isLoaded) {
+      localforage.setItem('portfolioData', JSON.stringify(data)).catch((e) => {
+        console.error("Gagal menyimpan data", e);
+      });
+    }
+  }, [data, isLoaded]);
 
   const handleChange = (field: string, value: any) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -119,16 +136,51 @@ export default function App() {
     });
   };
 
-  // Fungsi untuk mengonversi file yang diunggah ke base64 Data URL
+  // Fungsi untuk mengonversi dan mengompres file gambar yang diunggah
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, arrayName: 'projek' | 'sertifikat', index: number) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleArrayChange(arrayName, index, 'gambarUrl', reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert('File harus berupa gambar');
+        return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          handleArrayChange(arrayName, index, 'gambarUrl', dataUrl);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
