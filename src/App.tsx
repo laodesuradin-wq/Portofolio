@@ -235,7 +235,7 @@ export default function App() {
               <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight">
                 Hai, Saya <span className="text-indigo-600">{data.nama}</span>
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed text-justify">
                 Seorang <span className="font-semibold text-gray-800">{data.profesi}</span> yang {data.deskripsi.toLowerCase()}
               </p>
               <div className="flex justify-center gap-4">
@@ -294,7 +294,7 @@ export default function App() {
                 ) : (
                   <>
                     <h3 className="text-xl font-bold mb-2 text-gray-900">{projek.nama}</h3>
-                    <p className="text-gray-600 text-sm mb-4 leading-relaxed flex-1">
+                    <p className="text-gray-600 text-sm mb-4 leading-relaxed flex-1 text-justify">
                       {projek.deskripsi}
                     </p>
                     <a href={projek.link} target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline text-sm inline-flex items-center gap-1 mt-auto">
@@ -371,7 +371,7 @@ export default function App() {
                       <h3 className="font-bold text-lg mb-1 text-gray-900 leading-tight">{serti.judul}</h3>
                       <p className={`text-sm ${serti.warnaTeks} font-semibold mb-1`}>{serti.penyelenggara}</p>
                       <p className="text-xs text-gray-500 mb-3 bg-gray-100 inline-block px-2 py-0.5 rounded">{serti.tahun}</p>
-                      <p className="text-sm text-gray-600 leading-relaxed">{serti.deskripsi}</p>
+                      <p className="text-sm text-gray-600 leading-relaxed text-justify">{serti.deskripsi}</p>
                     </>
                   )}
                 </div>
