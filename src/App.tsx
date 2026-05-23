@@ -1,10 +1,153 @@
-import { Mail, Linkedin, Github, ExternalLink, Award } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Mail, Linkedin, Github, ExternalLink, Award, Edit3, Save, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+
+// Default data
+const DEFAULT_PORTFOLIO_DATA = {
+  nama: "La Ode Suradin",
+  profesi: "Web Developer / Designer",
+  deskripsi: "Saya fokus membangun solusi digital yang estetik dan fungsional dengan antarmuka pengguna yang modern.",
+  email: "laodesuradin@gmail.com",
+  linkedin: "https://linkedin.com/in/username",
+  github: "https://github.com/username",
+  tahun: new Date().getFullYear(),
+  projek: [
+    {
+      nama: "Nama Projek Pertama",
+      deskripsi: "Penjelasan singkat tentang masalah yang Anda selesaikan dan teknologi/alat yang digunakan.",
+      link: "#",
+      warnaBg: "bg-indigo-200",
+      warnaTeks: "text-indigo-700",
+      gambarUrl: ""
+    },
+    {
+      nama: "Nama Projek Kedua",
+      deskripsi: "Penjelasan singkat tentang masalah yang Anda selesaikan dan teknologi/alat yang digunakan.",
+      link: "#",
+      warnaBg: "bg-purple-200",
+      warnaTeks: "text-purple-700",
+      gambarUrl: ""
+    },
+    {
+      nama: "Nama Projek Ketiga",
+      deskripsi: "Penjelasan singkat tentang masalah yang Anda selesaikan dan teknologi/alat yang digunakan.",
+      link: "#",
+      warnaBg: "bg-pink-200",
+      warnaTeks: "text-pink-700",
+      gambarUrl: ""
+    }
+  ],
+  sertifikat: [
+    {
+      judul: "Bootcamp Web Development",
+      penyelenggara: "Penyelenggara A",
+      tahun: "2024",
+      deskripsi: "Pelatihan intensif pengembangan frontend dan backend menggunakan teknologi terkini.",
+      warnaBg: "bg-indigo-100",
+      warnaTeks: "text-indigo-600",
+      gambarUrl: ""
+    },
+    {
+      judul: "UI/UX Design Masterclass",
+      penyelenggara: "Penyelenggara B",
+      tahun: "2025",
+      deskripsi: "Pemahaman mendalam mengenai riset pengguna, wireframing, prototipe, dan usability testing.",
+      warnaBg: "bg-purple-100",
+      warnaTeks: "text-purple-600",
+      gambarUrl: ""
+    },
+    {
+      judul: "Sertifikasi Cloud Practitioner",
+      penyelenggara: "Penyelenggara C",
+      tahun: "2026",
+      deskripsi: "Sertifikasi profesional arsitektur komputasi awan dan implementasi infrastruktur digital.",
+      warnaBg: "bg-pink-100",
+      warnaTeks: "text-pink-600",
+      gambarUrl: ""
+    }
+  ]
+};
 
 export default function App() {
+  const [data, setData] = useState(DEFAULT_PORTFOLIO_DATA);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Muat data dari localStorage saat komponen dipasang
+  useEffect(() => {
+    const savedData = localStorage.getItem('portfolioData');
+    if (savedData) {
+      try {
+        setData(JSON.parse(savedData));
+      } catch (e) {
+        console.error("Gagal memuat data dari localStorage", e);
+      }
+    }
+  }, []);
+
+  // Simpan data ke localStorage setiap kali ada perubahan, untuk persistensi
+  useEffect(() => {
+    localStorage.setItem('portfolioData', JSON.stringify(data));
+  }, [data]);
+
+  const handleChange = (field: string, value: any) => {
+    setData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleArrayChange = (arrayName: 'projek' | 'sertifikat', index: number, field: string, value: any) => {
+    setData((prev) => {
+      const newArray = [...prev[arrayName]];
+      newArray[index] = { ...newArray[index], [field]: value };
+      return { ...prev, [arrayName]: newArray };
+    });
+  };
+
+  const handleRemoveItem = (arrayName: 'projek' | 'sertifikat', index: number) => {
+    setData((prev) => {
+      const newArray = prev[arrayName].filter((_, i) => i !== index);
+      return { ...prev, [arrayName]: newArray };
+    });
+  };
+
+  const handleAddItem = (arrayName: 'projek' | 'sertifikat') => {
+    setData((prev) => {
+      let newItem: any = {};
+      if (arrayName === 'projek') {
+        newItem = { nama: "Projek Baru", deskripsi: "Deskripsi", link: "#", warnaBg: "bg-gray-200", warnaTeks: "text-gray-700", gambarUrl: "" };
+      } else {
+        newItem = { judul: "Sertifikat Baru", penyelenggara: "Penyelenggara", tahun: new Date().getFullYear().toString(), deskripsi: "Deskripsi", warnaBg: "bg-gray-100", warnaTeks: "text-gray-600", gambarUrl: "" };
+      }
+      return { ...prev, [arrayName]: [...prev[arrayName], newItem] };
+    });
+  };
+
+  // Fungsi untuk mengonversi file yang diunggah ke base64 Data URL
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, arrayName: 'projek' | 'sertifikat', index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleArrayChange(arrayName, index, 'gambarUrl', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
-    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen scroll-smooth">
+    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen scroll-smooth pb-20">
+      
+      {/* Tombol Floating Edit Mode */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-xl text-white font-medium transition-all ${
+            isEditing ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
+        >
+          {isEditing ? <><Save className="w-5 h-5" /> Selesai Edit</> : <><Edit3 className="w-5 h-5" /> Mode Edit</>}
+        </button>
+      </div>
+
       {/* NAVBAR */}
-      <nav className="bg-white shadow-md fixed w-full top-0 z-50">
+      <nav className="bg-white shadow-md fixed w-full top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <span className="text-xl font-bold text-indigo-600">Halo.</span>
           <div className="space-x-6">
@@ -18,21 +161,41 @@ export default function App() {
 
       {/* HERO SECTION */}
       <section id="tentang" className="pt-32 pb-20 bg-gradient-to-tr from-indigo-50 to-white px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4">
-            Hai, Saya <span className="text-indigo-600">[Nama Anda]</span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Seorang [Profesi Anda, misal: Web Developer / Designer] yang fokus membangun solusi digital yang estetik dan fungsional.
-          </p>
-          <div className="flex justify-center gap-4">
-            <a href="#projek" className="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-indigo-700 font-medium transition">
-              Lihat Karya
-            </a>
-            <a href="#kontak" className="border border-indigo-600 text-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 font-medium transition">
-              Hubungi Saya
-            </a>
-          </div>
+        <div className="max-w-4xl mx-auto text-center relative">
+          {isEditing ? (
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-indigo-100 max-w-xl mx-auto text-left space-y-4">
+              <h3 className="font-bold text-indigo-700 mb-2 border-b pb-2">Edit Profil</h3>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Nama</label>
+                <input value={data.nama} onChange={e => handleChange('nama', e.target.value)} className="w-full border rounded p-2 focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Profesi</label>
+                <input value={data.profesi} onChange={e => handleChange('profesi', e.target.value)} className="w-full border rounded p-2 focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Deskripsi Singkat</label>
+                <textarea value={data.deskripsi} onChange={e => handleChange('deskripsi', e.target.value)} className="w-full border rounded p-2 focus:ring-2 focus:ring-indigo-500" rows={3}></textarea>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight">
+                Hai, Saya <span className="text-indigo-600">{data.nama}</span>
+              </h1>
+              <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+                Seorang <span className="font-semibold text-gray-800">{data.profesi}</span> yang {data.deskripsi.toLowerCase()}
+              </p>
+              <div className="flex justify-center gap-4">
+                <a href="#projek" className="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-indigo-700 font-medium transition">
+                  Lihat Karya
+                </a>
+                <a href="#kontak" className="border border-indigo-600 text-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 font-medium transition">
+                  Hubungi Saya
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -41,125 +204,183 @@ export default function App() {
         <h2 className="text-3xl font-bold text-center mb-12 text-gray-950">Projek Pilihan</h2>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Kartu Projek 1 */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group">
-            <div className="h-48 bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold group-hover:scale-105 transition-transform duration-300">
-              [ Gambar Projek 1 ]
-            </div>
-            <div className="p-6 relative bg-white">
-              <h3 className="text-xl font-bold mb-2">Nama Projek Pertama</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Penjelasan singkat tentang masalah yang Anda selesaikan dan teknologi/alat yang digunakan.
-              </p>
-              <a href="#" className="text-indigo-600 font-semibold hover:underline text-sm inline-flex items-center gap-1">
-                Lihat Detail <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
+          {data.projek.map((projek, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group relative flex flex-col h-full border border-gray-100">
+              {isEditing && (
+                <button onClick={() => handleRemoveItem('projek', index)} className="absolute top-2 right-2 z-10 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 shadow">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              
+              <div className={`h-48 ${projek.warnaBg} relative flex items-center justify-center ${projek.warnaTeks} font-bold overflow-hidden shrink-0`}>
+                {projek.gambarUrl ? (
+                  <img src={projek.gambarUrl} alt={projek.nama} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <span className="opacity-70 group-hover:scale-105 transition-transform duration-300">
+                    <ImageIcon className="w-12 h-12 mb-2 mx-auto" />
+                    [ Gambar Projek {index + 1} ]
+                  </span>
+                )}
+                
+                {isEditing && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <label className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-50 flex items-center gap-2">
+                      <Upload className="w-4 h-4" /> Unggah Gambar
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'projek', index)} />
+                    </label>
+                  </div>
+                )}
+              </div>
 
-          {/* Kartu Projek 2 */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group">
-            <div className="h-48 bg-purple-200 flex items-center justify-center text-purple-700 font-bold group-hover:scale-105 transition-transform duration-300">
-              [ Gambar Projek 2 ]
+              <div className="p-6 flex-1 flex flex-col">
+                {isEditing ? (
+                  <div className="space-y-3 flex-1">
+                    <input placeholder="Nama Projek" value={projek.nama} onChange={e => handleArrayChange('projek', index, 'nama', e.target.value)} className="w-full border-b pb-1 font-bold text-xl focus:outline-none focus:border-indigo-500" />
+                    <textarea placeholder="Deskripsi Singkat" value={projek.deskripsi} onChange={e => handleArrayChange('projek', index, 'deskripsi', e.target.value)} className="w-full border rounded p-2 text-sm focus:outline-none focus:border-indigo-500" rows={3}></textarea>
+                    <input placeholder="Link URL" value={projek.link} onChange={e => handleArrayChange('projek', index, 'link', e.target.value)} className="w-full border-b pb-1 text-sm text-indigo-600 focus:outline-none focus:border-indigo-500" />
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-bold mb-2 text-gray-900">{projek.nama}</h3>
+                    <p className="text-gray-600 text-sm mb-4 leading-relaxed flex-1">
+                      {projek.deskripsi}
+                    </p>
+                    <a href={projek.link} target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline text-sm inline-flex items-center gap-1 mt-auto">
+                      Lihat Detail <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="p-6 relative bg-white">
-              <h3 className="text-xl font-bold mb-2">Nama Projek Kedua</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Penjelasan singkat tentang masalah yang Anda selesaikan dan teknologi/alat yang digunakan.
-              </p>
-              <a href="#" className="text-indigo-600 font-semibold hover:underline text-sm inline-flex items-center gap-1">
-                Lihat Detail <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* Kartu Projek 3 */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition group">
-            <div className="h-48 bg-pink-200 flex items-center justify-center text-pink-700 font-bold group-hover:scale-105 transition-transform duration-300">
-              [ Gambar Projek 3 ]
-            </div>
-            <div className="p-6 relative bg-white">
-              <h3 className="text-xl font-bold mb-2">Nama Projek Ketiga</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Penjelasan singkat tentang masalah yang Anda selesaikan dan teknologi/alat yang digunakan.
-              </p>
-              <a href="#" className="text-indigo-600 font-semibold hover:underline text-sm inline-flex items-center gap-1">
-                Lihat Detail <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
+          ))}
+          
+          {isEditing && (
+            <button onClick={() => handleAddItem('projek')} className="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl h-full min-h-[300px] flex flex-col items-center justify-center text-indigo-500 hover:bg-indigo-100 hover:border-indigo-300 transition group">
+              <Plus className="w-10 h-10 mb-2 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold">Tambah Projek</span>
+            </button>
+          )}
         </div>
       </section>
 
       {/* SERTIFIKAT SECTION */}
-      <section id="sertifikat" className="py-20 px-4 max-w-6xl mx-auto">
+      <section id="sertifikat" className="py-20 px-4 max-w-6xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100">
         <h2 className="text-3xl font-bold text-center mb-12 text-gray-950">Sertifikat Pelatihan</h2>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Sertifikat 1 */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition flex items-start gap-4">
-            <div className="bg-indigo-100 p-3 rounded-lg text-indigo-600 shrink-0">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg mb-1 text-gray-900">Bootcamp Web Development</h3>
-              <p className="text-sm text-indigo-600 font-medium mb-1">Penyelenggara A</p>
-              <p className="text-sm text-gray-500 mb-3">2024</p>
-              <p className="text-sm text-gray-600 hover:text-gray-800 transition">Pelatihan intensif pengembangan frontend dan backend menggunakan teknologi terkini.</p>
-            </div>
-          </div>
+          {data.sertifikat.map((serti, index) => (
+            <div key={index} className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition flex flex-col relative">
+              {isEditing && (
+                <button onClick={() => handleRemoveItem('sertifikat', index)} className="absolute top-2 right-2 z-10 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 shadow">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              
+              {/* Tempat Gambar Sertifikat */}
+              {(serti.gambarUrl || isEditing) && (
+                <div className="bg-gray-100 h-40 relative flex items-center justify-center border-b">
+                  {serti.gambarUrl ? (
+                    <img src={serti.gambarUrl} alt={serti.judul} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-gray-400 flex flex-col items-center gap-2">
+                       <Award className="w-8 h-8 opacity-50" />
+                       <span className="text-sm font-medium">Belum ada gambar sertifikat</span>
+                    </div>
+                  )}
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <label className="cursor-pointer bg-white text-gray-800 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-50 flex items-center gap-2">
+                        <Upload className="w-4 h-4" /> Unggah
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'sertifikat', index)} />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
 
-          {/* Sertifikat 2 */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition flex items-start gap-4">
-            <div className="bg-purple-100 p-3 rounded-lg text-purple-600 shrink-0">
-              <Award className="w-6 h-6" />
+              <div className="p-5 flex items-start gap-4 flex-1">
+                {!serti.gambarUrl && !isEditing && (
+                   <div className={`${serti.warnaBg} p-3 rounded-lg ${serti.warnaTeks} shrink-0`}>
+                     <Award className="w-6 h-6" />
+                   </div>
+                )}
+                <div className="flex-1 w-full">
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <input placeholder="Judul Sertifikat" value={serti.judul} onChange={e => handleArrayChange('sertifikat', index, 'judul', e.target.value)} className="w-full border-b pb-1 font-bold text-gray-900 focus:outline-none focus:border-indigo-500" />
+                      <div className="flex gap-2">
+                        <input placeholder="Penyelenggara" value={serti.penyelenggara} onChange={e => handleArrayChange('sertifikat', index, 'penyelenggara', e.target.value)} className="flex-1 border-b pb-1 text-sm font-medium text-indigo-600 focus:outline-none" />
+                        <input placeholder="Tahun" value={serti.tahun} onChange={e => handleArrayChange('sertifikat', index, 'tahun', e.target.value)} className="w-20 border-b pb-1 text-sm text-gray-500 text-center focus:outline-none" />
+                      </div>
+                      <textarea placeholder="Deskripsi Singkat" value={serti.deskripsi} onChange={e => handleArrayChange('sertifikat', index, 'deskripsi', e.target.value)} className="w-full border rounded p-2 text-xs focus:outline-none focus:border-indigo-500" rows={2}></textarea>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-bold text-lg mb-1 text-gray-900 leading-tight">{serti.judul}</h3>
+                      <p className={`text-sm ${serti.warnaTeks} font-semibold mb-1`}>{serti.penyelenggara}</p>
+                      <p className="text-xs text-gray-500 mb-3 bg-gray-100 inline-block px-2 py-0.5 rounded">{serti.tahun}</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">{serti.deskripsi}</p>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-lg mb-1 text-gray-900">UI/UX Design Masterclass</h3>
-              <p className="text-sm text-purple-600 font-medium mb-1">Penyelenggara B</p>
-              <p className="text-sm text-gray-500 mb-3">2025</p>
-              <p className="text-sm text-gray-600 hover:text-gray-800 transition">Pemahaman mendalam mengenai riset pengguna, wireframing, prototipe, dan usability testing.</p>
-            </div>
-          </div>
+          ))}
 
-          {/* Sertifikat 3 */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition flex items-start gap-4">
-            <div className="bg-pink-100 p-3 rounded-lg text-pink-600 shrink-0">
-              <Award className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg mb-1 text-gray-900">Sertifikasi Cloud Practitioner</h3>
-              <p className="text-sm text-pink-600 font-medium mb-1">Penyelenggara C</p>
-              <p className="text-sm text-gray-500 mb-3">2026</p>
-              <p className="text-sm text-gray-600 hover:text-gray-800 transition">Sertifikasi profesional arsitektur komputasi awan dan implementasi infrastruktur digital.</p>
-            </div>
-          </div>
+          {isEditing && (
+            <button onClick={() => handleAddItem('sertifikat')} className="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl min-h-[200px] flex flex-col items-center justify-center text-indigo-500 hover:bg-indigo-100 hover:border-indigo-300 transition group">
+              <Plus className="w-10 h-10 mb-2 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold">Tambah Sertifikat</span>
+            </button>
+          )}
         </div>
       </section>
 
       {/* KONTAK SECTION */}
-      <section id="kontak" className="py-20 bg-gray-900 text-white px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Tertarik Bekerja Sama?</h2>
-          <p className="text-gray-400 mb-8">Saya selalu terbuka untuk diskusi projek baru atau kesempatan kerja penuh waktu.</p>
-          <div className="flex flex-wrap justify-center gap-6 text-lg">
-            <a href="mailto:emailanda@gmail.com" className="flex items-center gap-2 hover:text-indigo-400 font-medium transition">
-              <Mail className="w-5 h-5" /> emailanda@gmail.com
-            </a>
-            <a href="https://linkedin.com/in/username" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-indigo-400 font-medium transition">
-              <Linkedin className="w-5 h-5" /> LinkedIn
-            </a>
-            <a href="https://github.com/username" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-indigo-400 font-medium transition">
-              <Github className="w-5 h-5" /> GitHub
-            </a>
-          </div>
+      <section id="kontak" className="py-20 bg-gray-900 text-white px-4 mt-12">
+        <div className="max-w-4xl mx-auto text-center relative">
+          {isEditing ? (
+             <div className="bg-white/10 p-6 rounded-xl border border-white/20 max-w-xl mx-auto text-left space-y-4 text-white">
+                <h3 className="font-bold text-indigo-300 mb-2 border-b border-white/20 pb-2">Edit Kontak</h3>
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-300">Email</label>
+                  <input value={data.email} onChange={e => handleChange('email', e.target.value)} className="w-full bg-white/5 border border-white/20 rounded p-2 focus:ring-2 focus:ring-indigo-400 text-white placeholder-gray-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-300">LinkedIn URL</label>
+                  <input value={data.linkedin} onChange={e => handleChange('linkedin', e.target.value)} className="w-full bg-white/5 border border-white/20 rounded p-2 focus:ring-2 focus:ring-indigo-400 text-white placeholder-gray-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-gray-300">GitHub URL</label>
+                  <input value={data.github} onChange={e => handleChange('github', e.target.value)} className="w-full bg-white/5 border border-white/20 rounded p-2 focus:ring-2 focus:ring-indigo-400 text-white placeholder-gray-400" />
+                </div>
+             </div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold mb-4">Tertarik Bekerja Sama?</h2>
+              <p className="text-gray-400 mb-8">Saya selalu terbuka untuk diskusi projek baru atau kesempatan kerja penuh waktu.</p>
+              <div className="flex flex-wrap justify-center gap-6 text-lg">
+                <a href={`mailto:${data.email}`} className="flex items-center gap-2 text-gray-300 hover:text-indigo-400 font-medium transition group">
+                  <span className="p-2 bg-white/10 rounded-lg group-hover:bg-indigo-500/20 transition"><Mail className="w-5 h-5" /></span> {data.email}
+                </a>
+                <a href={data.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-300 hover:text-indigo-400 font-medium transition group">
+                  <span className="p-2 bg-white/10 rounded-lg group-hover:bg-indigo-500/20 transition"><Linkedin className="w-5 h-5" /></span> LinkedIn
+                </a>
+                <a href={data.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-300 hover:text-indigo-400 font-medium transition group">
+                   <span className="p-2 bg-white/10 rounded-lg group-hover:bg-indigo-500/20 transition"><Github className="w-5 h-5" /></span> GitHub
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
       {/* FOOTER */}
       <footer className="py-6 text-center text-sm text-gray-500 bg-gray-950 border-t border-gray-800">
-        &copy; 2026 [Nama Anda]. All rights reserved.
+        &copy; {data.tahun} {data.nama}. All rights reserved.
       </footer>
     </div>
   );
 }
+
+
